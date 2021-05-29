@@ -1,7 +1,7 @@
 Included herein are:
 
 [name] ([version]): [target], [included as]
-- [tinyexpr](https://github.com/codeplea/tinyexpr) (git:ffb0d41, Zlib): libvipster, always enabled
+- [tinyexpr](https://github.com/codeplea/tinyexpr) (git:6b9b727, Zlib): libvipster, git subtree
 - [JSON for Modern C++](https://github.com/nlohmann/json) (v3.9.1, MIT): libvipster, git submodule
 - [{fmt}](https://github.com/fmtlib/fmt) (7.1.3, MIT): libvipster, git submodule
 - [CLI11](https://github.com/CLIUtils/CLI11) (v1.9.1, BSD): vipster, git submodule
