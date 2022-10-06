@@ -8,6 +8,9 @@ on:
     pull_request:
     workflow_dispatch:
 
+env:
+  QtVersion: "6.4.0"
+
 jobs:
     debug:
         name: 'Test & Debug (Linux)'
@@ -22,11 +25,11 @@ jobs:
           uses: actions/cache@v1
           with:
               path: ../Qt
-              key: ${{ runner.os }}-QtCache-6.4.0
+              key: ${{ runner.os }}-QtCache-${{ env.QtVersion }}
         - name: Install Qt
           uses: jurplel/install-qt-action@v2
           with:
-              version: '6.4.0'
+              version: ${{ env.QtVersion }}
               target: 'desktop'
               cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
@@ -89,13 +92,13 @@ jobs:
           uses: actions/cache@v2
           with:
               path: Qt
-              key: ${{ runner.os }}-QtCache-6.4.0
+              key: ${{ runner.os }}-QtCache-${{ env.QtVersion }}
         - name: Install Qt
           uses: jurplel/install-qt-action@v2
           with:
-              version: '6.4.0'
+              version: ${{ env.QtVersion }}
               target: 'desktop'
-              arch: 'win64_mingw'
+              arch: 'win64_msvc2019_64'
               dir: ${{ github.workspace }}
               cached: ${{ steps.cache-qt.outputs.cache-hit }}
 
@@ -104,52 +107,30 @@ jobs:
           with:
               python-version: '3.10'
         - name: Add Python libraries
-          shell: bash
           run: pip install numpy moltemplate
 
         - name: Setup Ninja
           uses: seanmiddleditch/gha-setup-ninja@master
 
-        - name: Cache MinGW
+        - name: Configure Windows
           if: runner.os == 'Windows'
-          id: cache-mingw
-          uses: actions/cache@v2
+          uses: ilammy/msvc-dev-cmd@v1
           with:
-              path: MinGW
-              key: mingw-18.0
-        - name: Install MinGW
-          if: (runner.os == 'Windows') && (steps.cache-mingw.outputs.cache-hit != 'true')
-          shell: bash
-          run: |
-              choco install wget -y --no-progress
-              wget https://nuwen.net/files/mingw/mingw-18.0-without-git.exe
-              7z x mingw-18.0-without-git.exe
-              MinGW/set_distro_paths.bat
-        - name: Configure MinGW
-          if: runner.os == 'Windows'
-          shell: bash
-          run: |
-              echo $GITHUB_WORKSPACE/MinGW/bin >> $GITHUB_PATH
-              echo CMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/MinGW:$CMAKE_PREFIX_PATH >> $GITHUB_ENV
-              #echo CMAKE_GENERATOR="MSYS Makefiles" >> $GITHUB_ENV
+            arch: x64
 
         - name: Configure Linux
           if: runner.os == 'Linux'
-          shell: bash
           run: |
               sudo apt-get update
               sudo apt-get install libgl1-mesa-dev libxkbcommon-x11-0 libxcb-icccm4 libxcb-xinerama0 libxcb-xkb1 libxcb-render-util0 libxcb-keysyms1 libxcb-image0
 
         - name: Configure
-          shell: bash
-          run: cmake -GNinja -DVIPSTER_DESKTOP=ON -DPython3_ROOT_DIR=${pythonLocation} -DVIPSTER_PYWIDGET=ON -DVIPSTER_LAMMPS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build
+          run: cmake -GNinja -DVIPSTER_DESKTOP=ON -DPython3_ROOT_DIR=${{ env.pythonLocation }} -DVIPSTER_PYWIDGET=ON -DVIPSTER_LAMMPS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -B build
 
         - name: Build
-          shell: bash
           run: cmake --build build
 
         - name: Test
-          shell: bash
           run: |
               cd build   
               ctest --output-on-failure
@@ -216,28 +197,11 @@ jobs:
           with:
               submodules: true
 
-        - name: Cache MinGW
+        - name: Configure Windows
           if: runner.os == 'Windows'
-          id: cache-mingw
-          uses: actions/cache@v2
+          uses: ilammy/msvc-dev-cmd@v1
           with:
-              path: MinGW
-              key: mingw-18.0
-        - name: Install MinGW
-          if: (runner.os == 'Windows') && (steps.cache-mingw.outputs.cache-hit != 'true')
-          shell: bash
-          run: |
-              choco install wget -y --no-progress
-              wget https://nuwen.net/files/mingw/mingw-18.0-without-git.exe
-              7z x mingw-18.0-without-git.exe
-              MinGW/set_distro_paths.bat
-        - name: Configure MinGW
-          if: runner.os == 'Windows'
-          shell: bash
-          run: |
-              echo $GITHUB_WORKSPACE/MinGW/bin >> $GITHUB_PATH
-              echo CMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/MinGW:$CMAKE_PREFIX_PATH >> $GITHUB_ENV
-              echo CMAKE_GENERATOR="MSYS Makefiles" >> $GITHUB_ENV
+            arch: x64
 
         - name: Setup Python
           uses: actions/setup-python@v2
@@ -245,14 +209,12 @@ jobs:
               python-version: ${{ matrix.python-version }}
 
         - name: Build wheel
-          shell: bash
           run: |
               pip install setuptools wheel cmake
               python setup.py bdist_wheel
 
         - name: Fix Manylinux
           if: runner.os == 'Linux'
-          shell: bash
           run: |
               pip install auditwheel
               auditwheel repair dist/*.whl --plat manylinux_2_31_x86_64

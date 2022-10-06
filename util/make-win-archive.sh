@@ -15,6 +15,6 @@ cp -r $pythonLocation/Lib $pythonLocation/DLLs Vipster
 
 # prepare Qt and other libraries
 windeployqt --compiler-runtime --no-translations Vipster/vipster.exe
-cp $Qt5_Dir/bin/lib{gcc_s_seh-1,stdc++-6,winpthread-1}.dll Vipster
+#cp $Qt5_Dir/bin/lib{gcc_s_seh-1,stdc++-6,winpthread-1}.dll Vipster
 
 7z a Vipster-Win-x86_64.zip Vipster
